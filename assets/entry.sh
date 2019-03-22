@@ -43,15 +43,14 @@ if [ $IP ] && [ "${IP}" !=  "${ipaddress}" ] ; then
   ipaddress=$IP
 fi
 
-if [ -z $WEBSERVER_HTTP_PORT ] ; then
-    WEBSERVER_HTTP_PORT=80
+if [ -z $APACHE_ROOT_REDIRECTION ] ; then
+	REDIRECT="/fog/"
+else
+	REDIRECT=$APACHE_ROOT_REDIRECTION
 fi
 
-sed -i -E "s/^Listen (.*)/Listen ${WEBSERVER_HTTP_PORT}/" /etc/apache2/ports.conf
-sed -i -E "s/^<VirtualHost *:(.*)>/<VirtualHost *:${WEBSERVER_HTTP_PORT}>/" /etc/apache2/sites-enabled/001-fog.conf
-sed -i -E "s/chain http(.*)/chain http:\/\/${ipaddress}:${WEBSERVER_HTTP_PORT}\/fog\/service\/ipxe\/boot.php/" /tftpboot/default.ipxe
-sed -i -E "s/'WEB_HOST', \"(.*)\"/'WEB_HOST', \"${ipaddress}:${WEBSERVER_HTTP_PORT}\"/" /var/www/fog/lib/fog/config.class.php
-mysql -e "UPDATE globalSettings set settingValue='${ipaddress}:${WEBSERVER_HTTP_PORT}' WHERE settingKey='FOG_WEB_HOST'" fog
+sed -i "s~header.*~header('Location: $REDIRECT');~g" /var/www/html/index.php
+sed -i "s~header.*~header('Location: $REDIRECT');~g" /var/www/index.php
 
 
 /etc/init.d/xinetd start
